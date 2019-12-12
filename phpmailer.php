@@ -3,38 +3,52 @@
 use PHPMailer\PHPMailer\PHPMailer;
 
 require 'vendor/autoload.php';
-$mainToken='tTy9k6hkO1!==';
+include 'config.php';
+
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+    http_response_code(400);
+    return print_r(json_encode(['error'=>'you must provide post method.']));
+}
+if( !isset(apache_request_headers()['Content-Type']) || apache_request_headers()['Content-Type']!="application/json")
+{
+    http_response_code(400);
+    return print_r(json_encode(['error'=>'body must be json.']));
+}
+$CONTENTS=json_decode(file_get_contents('php://input'),TRUE);
+if( !isset($CONTENTS['address']) || !isset($CONTENTS['body']) )
+{
+    http_response_code(400);
+    return print_r(json_encode(['error'=>'missing fields.']));
+}
+
 $token = isset(apache_request_headers()['token'])?apache_request_headers()['token']:null;
-if($token==null || $mainToken!=$token)
+if($token==null || $config['token']!=$token)
 {
     http_response_code(401);
     return print_r(json_encode(['error'=>'token may be invalid.']));
 }
 ob_start();
-$subject='test Mail';
-$subject=isset($_POST['subject'])?$_POST['subject']:$subject;
-$adress='achraf@hostinger-tutorials.com';
-$name='achraf';
-$body='toto';
-//$adress=$_POST['adress'];
-//$name=isset($_POST['name'])?$_POST['name']:null;
-//$body=$_POST['body'];
+$subject=isset($CONTENTS['subject'])?$CONTENTS['subject']:'';
+
+$address=$CONTENTS['address'];
+$name=isset($CONTENTS['name'])?$CONTENTS['name']:null;
+$body=$CONTENTS['body'];
 
 $mail = new PHPMailer;
 $mail->isSMTP();
 //to ovh
-$mail->Priority = 3;
-$mail->SMTPDebug = 2;
+$mail->Priority = $config['Priority'];
+$mail->SMTPDebug = $config['SMTPDebug'];
 //end to ovh
-$mail->SMTPSecure = 'tls';
-$mail->Host = 'smtp.mailtrap.io';
-$mail->Port = 2525;
-$mail->SMTPAuth = true;
-$mail->Username = '75d5c55f77756a';
-$mail->Password = '1cfda865e9f33f';
-$mail->setFrom('test@hostinger-tutorials.com', 'Your Name');
-$mail->addReplyTo('reply-box@hostinger-tutorials.com', $name);
-$mail->addAddress($adress, 'Receiver Name');
+$mail->SMTPSecure = $config['SMTPSecure'];
+$mail->Host = $config['Host'];
+$mail->Port = $config['Port'];
+$mail->SMTPAuth = $config['SMTPAuth'];
+$mail->Username = $config['Username'];
+$mail->Password = $config['Password'];
+$mail->setFrom($config['From']['address'], $config['From']['name']);
+$mail->addReplyTo($config['Reply'], $name);
+$mail->addAddress($address, 'Receiver Name');
 $mail->Subject = $subject;
 $mail->Body = $body;
 //$mail->msgHTML(file_get_contents('message.html'), __DIR__);
