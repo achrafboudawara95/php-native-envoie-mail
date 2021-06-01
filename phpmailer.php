@@ -36,6 +36,7 @@ $body=$CONTENTS['body'];
 
 $mail = new PHPMailer;
 $mail->isSMTP();
+$mail->IsHTML(true);
 //to ovh
 $mail->Priority = $config['Priority'];
 $mail->SMTPDebug = $config['SMTPDebug'];
